@@ -57,10 +57,10 @@ or improve predictions (stacking).
 ## Data Pre Processing
 - Describing and Visualising Descriptive Statistics
 
-   Histogram plot visualisation for each attribute will be so diffcult because we have high dimensional column 23.So Better, we can 
-   use heat map to find the correlations coefficient values. we will remove the less correlation coefficient columns. We can remove
-   the irrelavant features it will minimize the accuracy of an algorithm.It will be better if we take relavent features columns then 
-   we can achive to get good accuracy.
+   Histogram plot visualisation for each attribute will be diffcult because we have high dimensional column 23. I use heat map to find
+   the correlations coefficient values and then remove the less correlation coefficient columns. After that i remove the irrelavant 
+   features because this will minimize the accuracy of the algorithms.
+ 
    
 - Data cleaning
 
