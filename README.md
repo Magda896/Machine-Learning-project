@@ -88,4 +88,4 @@ or improve predictions (stacking).
   
 
 ## Accuracy of best algorithm
-The best algorithm got training accuracy of 100% and the test set accuracy 84%.The model is not underfit or overfit.
+The best algorithm got training accuracy of 100% and the test set accuracy 89%.The model is not underfit or overfit.
