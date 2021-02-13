@@ -1,0 +1,267 @@
+import numpy as np 
+import pandas as pd 
+
+data= pd.read_csv("parkinsons.csv")
+
+# Emfanisi ths kefalhs kai ths ouras tou synolou dedomenwn
+data.head()
+data.tail()
+
+
+# Emfanisi tou sximatos(shape) kai tou tupou dedomenwn gia kathe metavlhth
+print(data.shape)
+data.dtypes
+
+
+# Emfanisi twn stoixeiwn descriptive statistics pou perigrafei kathe metablhth
+data.describe()
+
+# Optikopoihsh heatmap gia kathe sintelesth syxetismou metavlhtwn
+#pip install seaborn
+import seaborn as sb
+xarths_sisxetisewn=data.corr()
+ax=sb.heatmap(xarths_sisxetisewn,xticklabels=True,cmap="YlGnBu")
+cbar = ax.collections[0].colorbar
+cbar.set_ticks([-.75, -.50, -.25, 0, .25, .50, .75, 1])
+
+
+# Optikopoihsh tou heatmap me times tou suntelesth sysxetishs gia zeugos xarakthristikwn
+import matplotlib.pyplot as plt
+import numpy as np
+
+# H timh K shmainei posa xarakthristika tha provlithoun sto heatmap
+k=10
+
+# Vriskw tis sthles poy sxetizontai me to xarakthristiko ejodou kai taktopoioume
+# apo thn korufaia timh tou syntelesth susxetishs pros ta katw
+sthles=xarths_sisxetisewn.nlargest(k,'status')['status'].index
+
+# times suntelesth susxetishs
+times_sintelesth=np.corrcoef(data[sthles].values.T)
+sb.set(font_scale=1.25)
+sb.heatmap(times_sintelesth,cbar=True,cmap="YlGnBu",annot=True,square=True,fmt='.2f',
+           annot_kws={'size': 10},yticklabels=sthles.values,xticklabels=sthles.values)
+plt.show()
+
+
+
+# times syntelesth susxetishs gia kathe xarakthristiko h metavlhth
+times_sisxetisewn=data.corr()['status']
+times_sisxetisewn.abs().sort_values(ascending=False)
+
+# Elegxos gia mhdenikes times
+data.info()
+
+# Elegxos athroismatos mhdenikhs ajias
+data.isna().sum()
+
+# Diaxwrizw to synolo dedomenwn se xarakthristika(metavlhtes) eisodou kai ejodou
+y=data['status']
+sthles=['MDVP:RAP','Jitter:DDP','DFA','NHR','MDVP:Fhi(Hz)','name','status']
+x=data.drop(sthles,axis=1)
+
+# Diaxwrizw to synolo dedomenwn se train kai test
+train_size=0.80
+test_size=0.20
+seed=5
+from sklearn.model_selection import train_test_split
+x_train,x_test,y_train,y_test=train_test_split(x,y,train_size=train_size,test_size=test_size,random_state=seed)
+
+
+# Sygkrish algorithmwn xwris klimaka xarakthristikwn(feature scale)
+n_neighbors=5
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+
+# Ola ta montela algorithmwn mpainoun se mia lista
+modela=[]
+modela.append(('LogisticRegression',LogisticRegression()))
+modela.append(('knn',KNeighborsClassifier(n_neighbors=n_neighbors)))
+modela.append(('SVC',SVC()))
+modela.append(("decision_tree",DecisionTreeClassifier()))
+modela.append(('Naive Bayes',GaussianNB()))
+
+# Aksiologhsh kathe algorithmou
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+onomata=[]
+provlepseis=[]
+error='accuracy'
+for name,model in modela:
+    fold=KFold(n_splits=10,random_state=None)
+    apotelesma=cross_val_score(model,x_train,y_train,cv=fold,scoring=error)
+    provlepseis.append(apotelesma)
+    onomata.append(name)
+    msg="%s : %f (%f)"%(name,apotelesma.mean(),apotelesma.std())
+    print(msg)
+    
+
+# Optikopoihsh ths akriveias tou montelou
+fig=plt.figure()
+fig.suptitle("Comparing Algorithms")
+plt.boxplot(provlepseis)
+plt.show()
+
+# Sygkrish algorithmwn me klimaka xarakthristikwn(feature scale)
+# H sygkrish algorithmvm ginetai me StandardScaler Scaler
+from sklearn.pipeline import Pipeline
+from sklearn. preprocessing import StandardScaler
+pipelines=[]
+pipelines.append(('scaled Logisitic Regression',Pipeline([('scaler',StandardScaler()),('LogisticRegression',LogisticRegression())])))
+pipelines.append(('scaled KNN',Pipeline([('scaler',StandardScaler()),('KNN',KNeighborsClassifier(n_neighbors=n_neighbors))])))
+pipelines.append(('scaled SVC',Pipeline([('scaler',StandardScaler()),('SVC',SVC())])))
+pipelines.append(('scaled DecisionTree',Pipeline([('scaler',StandardScaler()),('decision',DecisionTreeClassifier())])))
+pipelines.append(('scaled naive bayes',Pipeline([('scaler',StandardScaler()),('scaled Naive Bayes',GaussianNB())])))
+
+# Ajiologhsh kathe algorithmou
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+onomata=[]
+provlepseis=[]
+for name,model in modela:
+    fold=KFold(n_splits=10,random_state=None)
+    apotelesma=cross_val_score(model,x_train,y_train,cv=fold,scoring=error)
+    provlepseis.append(apotelesma)
+    onomata.append(name)
+    msg="%s : %f (%f)"%(name,apotelesma.mean(),apotelesma.std())
+    print(msg)
+    
+
+# Optikopoihsh ths akriveias tou montelou
+fig=plt.figure()
+fig.suptitle("Comparing Algorithms")
+plt.boxplot(provlepseis)
+plt.show()
+
+
+# Decision Tree Tunning algorithmos
+import numpy as np
+from sklearn.model_selection import GridSearchCV
+scaler=StandardScaler().fit(x_train)
+rescaledx=scaler.transform(x_train)
+param_grid=dict()
+model=DecisionTreeClassifier()
+fold=KFold(n_splits=10,random_state=5,shuffle=True)
+grid=GridSearchCV(estimator=model,param_grid=param_grid,scoring=error,cv=fold)
+grid_result=grid.fit(rescaledx,y_train)
+
+print("Best: %f using %s "%(grid_result.best_score_,grid_result.best_params_))
+
+
+# Logistic Regression Tuning algorithmos
+import numpy as np
+from sklearn.model_selection import GridSearchCV
+scaler=StandardScaler().fit(x_train)
+rescaledx=scaler.transform(x_train)
+c=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+param_grid=dict(C=c)
+model=LogisticRegression()
+fold=KFold(n_splits=10,random_state=5,shuffle=True)
+grid=GridSearchCV(estimator=model,param_grid=param_grid,scoring=error,cv=fold)
+grid_result=grid.fit(rescaledx,y_train)
+
+print("Best: %f using %s "%(grid_result.best_score_,grid_result.best_params_))
+
+
+
+# Ensemble: Boosting kai Bagging algorithmoi gia th veltiwsh ths apodoshs tou montelou
+
+#Ensemble
+# Boosting methodoi
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+# Bagging methodoi
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import ExtraTreesClassifier
+ensembles=[]
+ensembles.append(('scaledAB',Pipeline([('scale',StandardScaler()),('AB',AdaBoostClassifier())])))
+ensembles.append(('scaledGBC',Pipeline([('scale',StandardScaler()),('GBc',GradientBoostingClassifier())])))
+ensembles.append(('scaledRFC',Pipeline([('scale',StandardScaler()),('rf',RandomForestClassifier(n_estimators=10))])))
+ensembles.append(('scaledETC',Pipeline([('scale',StandardScaler()),('ETC',ExtraTreesClassifier(n_estimators=10))])))
+# Aksiologhsh kathe ensemble texnikhs
+apotelesmata=[]
+onomata=[]
+for name,model in ensembles:
+    fold=KFold(n_splits=10,random_state=5,shuffle=True)
+    apotelesma=cross_val_score(model,x_train,y_train,cv=fold,scoring=error)
+    apotelesmata.append(apotelesma)
+    onomata.append(name)
+    msg="%s : %f (%f)"%(name,apotelesma.mean(),apotelesma.std())
+    print(msg)
+    
+# Optikopoihsh twn sugkrithentwn algorithmwn Ensemble
+fig=plt.figure()
+fig.suptitle('Ensemble Compared Algorithms')
+plt.boxplot(apotelesmata)
+plt.show()
+
+
+# GradientBoosting Classifier Tuning
+import numpy as np
+from sklearn.model_selection import GridSearchCV
+scaler=StandardScaler().fit(x_train)
+rescaledx=scaler.transform(x_train)
+n_estimators=[10,20,30,40,50,100,150,200,250,300]
+learning_rate=[0.001,0.01,0.1,0.3,0.5,0.7,1.0]
+param_grid=dict(n_estimators=n_estimators,learning_rate=learning_rate)
+model=GradientBoostingClassifier()
+fold=KFold(n_splits=10,random_state=5,shuffle=True)
+grid=GridSearchCV(estimator=model,param_grid=param_grid,scoring=error,cv=fold)
+grid_result=grid.fit(rescaledx,y_train)
+
+print("Best: %f using %s "%(grid_result.best_score_,grid_result.best_params_))
+
+
+
+# Extra Trees Classifier Tuning
+import numpy as np
+from sklearn.model_selection import GridSearchCV
+scaler=StandardScaler().fit(x_train)
+rescaledx=scaler.transform(x_train)
+n_estimators=[10,20,30,40,50,100,150,200]
+param_grid=dict(n_estimators=n_estimators)
+model=ExtraTreesClassifier()
+fold=KFold(n_splits=10,random_state=5,shuffle=True)
+grid=GridSearchCV(estimator=model,param_grid=param_grid,scoring=error,cv=fold)
+grid_result=grid.fit(rescaledx,y_train)
+
+print("Best: %f using %s "%(grid_result.best_score_,grid_result.best_params_))
+
+
+# Oristikopoihsh montelou
+# oloklhrwthike o algorithmos  kai ajiologhte to montelo 
+# gia thn anixneush ths nosou Parkinson
+
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+scaler=StandardScaler().fit(x_train)
+scaler_x=scaler.transform(x_train)
+model=GradientBoostingClassifier(n_estimators=40)
+model.fit(scaler_x,y_train)
+
+# Metatroph tou validation test set data
+scaledx_test=scaler.transform(x_test)
+y_pred=model.predict(scaledx_test)
+y_predtrain=model.predict(scaler_x)
+
+accuracy_mean=accuracy_score(y_train,y_predtrain)
+accuracy_matric=confusion_matrix(y_train,y_predtrain)
+print("train set",accuracy_mean)
+print("train set matrix",accuracy_matric)
+
+accuracy_mean=accuracy_score(y_test,y_pred)
+accuracy_matric=confusion_matrix(y_test,y_pred)
+print("test set",accuracy_mean)
+print("test set matrix",accuracy_matric)
+
+
+
+
+
+
+
+
